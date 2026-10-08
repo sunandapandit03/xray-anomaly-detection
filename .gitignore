@@ -1,0 +1,11 @@
+venv/
+data/
+__pycache__/
+results/*.pth
+.DS_Store
+movies.txt
+src/hey*
+src/titanic.py
+src/train.csv
+src/explore.py
+src/split_test.py
