@@ -51,7 +51,7 @@ from torchvision import models
 
 
 class XrayModel(nn.Module):
-    def __init__(self):
+    def __init__(self, num_outputs=2, unfreeze_layer4=False):
         super().__init__()
 
         # pretrained ResNet18 that already knows edges, textures, shapes
@@ -61,12 +61,15 @@ class XrayModel(nn.Module):
         for param in self.model.parameters():
             param.requires_grad = False
 
-        # swap the last layer: 512 numbers in, 2 scores out (NORMAL, PNEUMONIA)
-        # made AFTER freezing, so this new layer stays trainable
-        self.model.fc = nn.Linear(512, 2)
+        # optionally let the LAST block (layer4) learn too
+        if unfreeze_layer4:
+            for param in self.model.layer4.parameters():
+                param.requires_grad = True
+
+        # new last layer: 512 numbers in, num_outputs scores out
+        self.model.fc = nn.Linear(512, num_outputs)
 
     def forward(self, x):
-        # image goes through ResNet, 2 scores come out
         return self.model(x)
 
 
@@ -74,9 +77,10 @@ class XrayModel(nn.Module):
 if __name__ == "__main__":
     import torch
 
-    model = XrayModel()
-    fake_batch = torch.zeros(4, 3, 224, 224)  # 4 blank images, just to test the shape
-    print(model(fake_batch).shape)
+    fake_batch = torch.zeros(4, 3, 224, 224)
+    print(XrayModel(num_outputs=14)(fake_batch).shape)
 
-    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(trainable)
+    for flag in [False, True]:
+        m = XrayModel(num_outputs=14, unfreeze_layer4=flag)
+        trainable = sum(p.numel() for p in m.parameters() if p.requires_grad)
+        print(flag, trainable)

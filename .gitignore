@@ -9,3 +9,6 @@ src/titanic.py
 src/train.csv
 src/explore.py
 src/split_test.py
+src/explore_nih.py
+src/look_image.py
+src/multilabel_test.py
